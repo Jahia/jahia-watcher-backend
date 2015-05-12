@@ -117,7 +117,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Jahia-Depends>default</Jahia-Depends>
+                        <Jahia-Depends>default,spam-filtering</Jahia-Depends>
                     </instructions>
                 </configuration>
             </plugin>

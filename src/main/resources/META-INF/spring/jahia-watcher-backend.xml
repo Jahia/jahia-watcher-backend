@@ -4,6 +4,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
     <bean class="org.jahia.modules.mobile.backend.jahia.watcher.BlockUserAction">
+        <property name="jahiaUserManagerService" ref="JahiaUserManagerService" />
         <property name="name" value="blockUser"/>
         <property name="requireAuthenticatedUser" value="true"/>
     </bean>
@@ -19,6 +20,7 @@
     </bean>
 
     <bean class="org.jahia.modules.mobile.backend.jahia.watcher.TaskActionsAction">
+        <property name="jahiaGroupManagerService" ref="JahiaGroupManagerService" />
         <property name="name" value="taskActions"/>
         <property name="requireAuthenticatedUser" value="true"/>
     </bean>

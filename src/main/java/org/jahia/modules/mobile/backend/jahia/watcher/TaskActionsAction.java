@@ -8,9 +8,11 @@ import org.jahia.services.content.JCRSessionWrapper;
 import org.jahia.services.content.JCRValueWrapper;
 import org.jahia.services.render.RenderContext;
 import org.jahia.services.render.Resource;
+import org.jahia.services.render.URLGenerator;
 import org.jahia.services.render.URLResolver;
 import org.jahia.services.usermanager.JahiaGroupManagerService;
 import org.jahia.services.usermanager.JahiaUserManagerService;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -71,7 +73,11 @@ public class TaskActionsAction extends Action {
             if (task.hasProperty("targetNode")) {
                 JCRNodeWrapper targetNode = (JCRNodeWrapper) task.getProperty("targetNode").getNode();
                 JCRNodeWrapper displayableNode = JCRContentUtils.findDisplayableNode(targetNode, renderContext);
-                String previewUrl = renderContext.getRequest().getContextPath() + renderContext.getURLGenerator().getBasePreview() + displayableNode.getPath() + ".html";
+                URLGenerator urlGenerator = renderContext.getURLGenerator();
+                if (urlGenerator == null) {
+                    urlGenerator = new URLGenerator(renderContext, resource);
+                }
+                String previewUrl = renderContext.getRequest().getContextPath() + urlGenerator.getBasePreview() + displayableNode.getPath() + ".html";
                 jsonObject.put("preview-url", previewUrl);
             }
 
@@ -117,7 +123,12 @@ public class TaskActionsAction extends Action {
             }
 
             if (possibleActions.size() > 0) {
-                jsonObject.put("possibleActions", possibleActions);
+                JSONArray jsonArray = new JSONArray();
+                for (TaskAction taskAction : possibleActions) {
+                    JSONObject jsonTaskAction = new JSONObject(taskAction);
+                    jsonArray.put(jsonTaskAction);
+                }
+                jsonObject.put("possibleActions", jsonArray);
             }
         } catch (RepositoryException e) {
             logger.error("Error accessing task " + resource.getNode(), e);
@@ -139,7 +150,7 @@ public class TaskActionsAction extends Action {
             if (!assignable) {
                 List<String> userGroups = jahiaGroupManagerService.getUserMembership(getCurrentUser());
                 for (String userGroup : userGroups) {
-                    if (candidates.contains(userGroup)) {
+                    if (candidates.contains("g:" + userGroup)) {
                         assignable = true;
                     }
                 }

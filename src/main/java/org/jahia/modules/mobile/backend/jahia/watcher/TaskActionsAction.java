@@ -1,5 +1,6 @@
 package org.jahia.modules.mobile.backend.jahia.watcher;
 
+import org.apache.velocity.util.StringUtils;
 import org.jahia.bin.Action;
 import org.jahia.bin.ActionResult;
 import org.jahia.services.content.JCRContentUtils;
@@ -89,27 +90,27 @@ public class TaskActionsAction extends Action {
             }
 
             if ("active".equals(taskStatus) && assignable && !getCurrentUser().getName().equals(assigneeUserKey)) {
-                possibleActions.add(new TaskAction("assignToMe"));
+                possibleActions.add(new TaskAction("Assign to me", "assignToMe"));
             }
 
             if ("active".equals(taskStatus) && getCurrentUser().getName().equals(assigneeUserKey)) {
-                possibleActions.add(new TaskAction("refuse"));
-                possibleActions.add(new TaskAction("start"));
+                possibleActions.add(new TaskAction("Refuse", "refuse"));
+                possibleActions.add(new TaskAction("Start", "start"));
             }
 
             if ("started".equals(taskStatus) && getCurrentUser().getName().equals(assigneeUserKey)) {
-                possibleActions.add(new TaskAction("refuse"));
-                possibleActions.add(new TaskAction("suspend"));
+                possibleActions.add(new TaskAction("Refuse", "refuse"));
+                possibleActions.add(new TaskAction("Suspend", "suspend"));
                 if (task.hasProperty("possibleOutcomes")) {
                     List<String> possibleOutcomes = new ArrayList<String>();
                     JCRValueWrapper[] possibleOutcomesValues = task.getProperty("possibleOutcomes").getValues();
                     if (possibleOutcomesValues != null && possibleOutcomesValues.length > 0) {
                         for (JCRValueWrapper possibleOutcomeValue : possibleOutcomesValues) {
-                            possibleActions.add(new TaskAction("finished", possibleOutcomeValue.getString()));
+                            possibleActions.add(new TaskAction(StringUtils.capitalizeFirstLetter(possibleOutcomeValue.getString()), "finished", possibleOutcomeValue.getString()));
                         }
                     }
                 } else {
-                    possibleActions.add(new TaskAction("finished"));
+                    possibleActions.add(new TaskAction("Finished", "finished"));
                 }
             }
 
@@ -118,8 +119,8 @@ public class TaskActionsAction extends Action {
             }
 
             if ("suspended".equals(taskStatus) && getCurrentUser().getName().equals(assigneeUserKey)) {
-                possibleActions.add(new TaskAction("refuse"));
-                possibleActions.add(new TaskAction("continue"));
+                possibleActions.add(new TaskAction("Refuse", "refuse"));
+                possibleActions.add(new TaskAction("Continue", "continue"));
             }
 
             if (possibleActions.size() > 0) {
@@ -174,7 +175,7 @@ public class TaskActionsAction extends Action {
 
             jcrSessionWrapper.checkout(task);
             if ("assignToMe".equals(action)) {
-                task.setProperty("assigneeUserKey", getCurrentUser().getUserKey());
+                task.setProperty("assigneeUserKey", getCurrentUser().getName());
             } else if ("refuse".equals(action)) {
                 task.setProperty("assigneeUserKey", (Value) null);
             } else if ("start".equals(action)) {
@@ -185,6 +186,9 @@ public class TaskActionsAction extends Action {
                 // we do nothing for the preview action
             } else if ("finished".equals(action)) {
                 task.setProperty("state", "finished");
+                if (outcome != null) {
+                    task.setProperty("finalOutcome", outcome);
+                }
             } else if ("continue".equals(action)) {
                 task.setProperty("state", "started");
             } else {
@@ -198,7 +202,7 @@ public class TaskActionsAction extends Action {
         } catch (RepositoryException e) {
             logger.error("Error updating task " + task.getPath(), e);
         }
-
+        logger.info("Task " + task.getPath() + " updated successfully to action={} outcome={}", action, outcome);
 
         return new ActionResult(200, null, jsonObject);
     }

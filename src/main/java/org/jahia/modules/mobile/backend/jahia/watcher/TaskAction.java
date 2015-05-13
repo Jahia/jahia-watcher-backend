@@ -5,16 +5,28 @@ package org.jahia.modules.mobile.backend.jahia.watcher;
  */
 public class TaskAction {
 
+    private String displayName;
     private String name;
     private String finalOutcome;
 
-    public TaskAction(String name, String finalOutcome) {
+    public TaskAction(String displayName, String name, String finalOutcome) {
+        this.displayName = displayName;
         this.name = name;
         this.finalOutcome = finalOutcome;
     }
 
     public TaskAction(String name) {
+        this.displayName = name;
         this.name = name;
+    }
+
+    public TaskAction(String displayName, String name) {
+        this.displayName = displayName;
+        this.name = name;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 
     public String getName() {

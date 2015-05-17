@@ -164,7 +164,7 @@ public class TaskActionsAction extends Action {
         JSONObject jsonObject = new JSONObject();
 
         String action = httpServletRequest.getParameter("action");
-        String outcome = httpServletRequest.getParameter("outcome");
+        String outcome = httpServletRequest.getParameter("finalOutcome");
 
         JCRNodeWrapper task = resource.getNode();
 
@@ -175,9 +175,11 @@ public class TaskActionsAction extends Action {
 
             jcrSessionWrapper.checkout(task);
             if ("assignToMe".equals(action)) {
+                task.setProperty("state", "active");
                 task.setProperty("assigneeUserKey", getCurrentUser().getName());
             } else if ("refuse".equals(action)) {
                 task.setProperty("assigneeUserKey", (Value) null);
+                task.setProperty("state", "active");
             } else if ("start".equals(action)) {
                 task.setProperty("state", "started");
             } else if ("suspend".equals(action)) {
@@ -185,18 +187,18 @@ public class TaskActionsAction extends Action {
             } else if ("preview".equals(action)) {
                 // we do nothing for the preview action
             } else if ("finished".equals(action)) {
-                task.setProperty("state", "finished");
                 if (outcome != null) {
                     task.setProperty("finalOutcome", outcome);
                 }
+                task.setProperty("state", "finished");
             } else if ("continue".equals(action)) {
                 task.setProperty("state", "started");
             } else {
                 // this is probably a possible outcome, we will treat it as such
-                task.setProperty("state", "finished");
                 if (outcome != null) {
                     task.setProperty("finalOutcome", outcome);
                 }
+                task.setProperty("state", "finished");
             }
             jcrSessionWrapper.save();
         } catch (RepositoryException e) {

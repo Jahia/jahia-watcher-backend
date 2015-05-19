@@ -56,8 +56,8 @@ public class PostActionsAction extends Action {
             if (urlGenerator == null) {
                 urlGenerator = new URLGenerator(renderContext, resource);
             }
-            String previewUrl = renderContext.getRequest().getContextPath() + urlGenerator.getBasePreview() + displayableNode.getPath() + ".html";
-            jsonObject.put("view-url", previewUrl);
+            String viewUrl = renderContext.getRequest().getContextPath() + urlGenerator.getBaseLive() + displayableNode.getPath() + ".html";
+            jsonObject.put("view-url", viewUrl);
 
             if (post.hasPermission(Privilege.JCR_REMOVE_NODE)) {
                 possibleActions.add(new PostAction("Delete", "delete"));

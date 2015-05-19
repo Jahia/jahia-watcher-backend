@@ -25,4 +25,10 @@
         <property name="requireAuthenticatedUser" value="true"/>
     </bean>
 
+    <bean class="org.jahia.modules.mobile.backend.jahia.watcher.PostActionsAction">
+        <property name="jahiaUserManagerService" ref="JahiaUserManagerService" />
+        <property name="name" value="postActions"/>
+        <property name="requireAuthenticatedUser" value="true"/>
+    </bean>
+
 </beans>

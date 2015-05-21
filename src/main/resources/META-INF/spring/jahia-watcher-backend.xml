@@ -9,8 +9,19 @@
         <property name="requireAuthenticatedUser" value="true"/>
     </bean>
 
+    <bean class="org.jahia.modules.mobile.backend.jahia.watcher.UnblockUserAction">
+        <property name="jahiaUserManagerService" ref="JahiaUserManagerService" />
+        <property name="name" value="unblockUser"/>
+        <property name="requireAuthenticatedUser" value="true"/>
+    </bean>
+
     <bean class="org.jahia.modules.mobile.backend.jahia.watcher.MarkAsSpamAction">
         <property name="name" value="markAsSpam"/>
+        <property name="requireAuthenticatedUser" value="true"/>
+    </bean>
+
+    <bean class="org.jahia.modules.mobile.backend.jahia.watcher.UnmarkAsSpamAction">
+        <property name="name" value="unmarkAsSpam"/>
         <property name="requireAuthenticatedUser" value="true"/>
     </bean>
 

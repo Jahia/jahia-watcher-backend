@@ -63,7 +63,11 @@ public class PostActionsAction extends Action {
                 possibleActions.add(new PostAction("Delete", "delete"));
             }
             if (post.hasPermission(Privilege.JCR_WRITE)) {
-                possibleActions.add(new PostAction("Mark as spam", "markAsSpam"));
+                if (post.isNodeType("jmix:spamFilteringSpamDetected")) {
+                    possibleActions.add(new PostAction("Not spam", "unmarkAsSpam"));
+                } else {
+                    possibleActions.add(new PostAction("Mark as spam", "markAsSpam"));
+                }
             }
             if (post.getParent().hasPermission(Privilege.JCR_WRITE)) {
                 possibleActions.add(new PostAction("Reply", "reply"));
@@ -73,8 +77,12 @@ public class PostActionsAction extends Action {
                 JahiaUser authorUser = jahiaUserManagerService.lookupUser(author);
                 if (authorUser != null && authorUser instanceof JCRUser) {
                     JCRUser authorJCRUser = (JCRUser) authorUser;
-                    if (authorJCRUser.getNode(jcrSessionWrapper).hasPermission(Privilege.JCR_MODIFY_PROPERTIES)) {
-                        possibleActions.add(new PostAction("Block user", "blockUser"));
+                    if (authorJCRUser.getNode(jcrSessionWrapper).hasPermission(Privilege.JCR_MODIFY_PROPERTIES) && !authorUser.isRoot()) {
+                        if (authorUser.isAccountLocked()) {
+                            possibleActions.add(new PostAction("Unblock user", "unblockUser"));
+                        } else {
+                            possibleActions.add(new PostAction("Block user", "blockUser"));
+                        }
                     }
                 }
             }

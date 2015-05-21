@@ -38,7 +38,7 @@ public class UnblockUserAction extends Action {
             return ActionResult.INTERNAL_ERROR;
         }
 
-        if (jahiaUser.isRoot() || jahiaUser.isAccountLocked()) {
+        if (jahiaUser.isRoot() || !jahiaUser.isAccountLocked()) {
             return ActionResult.INTERNAL_ERROR;
         }
 

@@ -42,4 +42,9 @@
         <property name="requireAuthenticatedUser" value="true"/>
     </bean>
 
+    <bean id="latestPostsPreparedQuery" class="org.jahia.modules.jcrestapi.api.PreparedQuery">
+        <property name="name" value="latestPosts"/>
+        <property name="source" value="select * from [jnt:post] as p order by p.[jcr:created] desc"/>
+    </bean>
+
 </beans>

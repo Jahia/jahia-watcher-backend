@@ -5,6 +5,7 @@ import org.jahia.bin.ActionResult;
 import org.jahia.services.content.JCRContentUtils;
 import org.jahia.services.content.JCRNodeWrapper;
 import org.jahia.services.content.JCRSessionWrapper;
+import org.jahia.services.content.decorator.JCRUserNode;
 import org.jahia.services.render.RenderContext;
 import org.jahia.services.render.Resource;
 import org.jahia.services.render.URLGenerator;
@@ -20,6 +21,8 @@ import org.slf4j.Logger;
 import javax.jcr.RepositoryException;
 import javax.jcr.security.Privilege;
 import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -74,11 +77,10 @@ public class PostActionsAction extends Action {
             }
             if (post.hasProperty("jcr:createdBy")) {
                 String author = post.getProperty("jcr:createdBy").getString();
-                JahiaUser authorUser = jahiaUserManagerService.lookupUser(author);
-                if (authorUser != null && authorUser instanceof JCRUser) {
-                    JCRUser authorJCRUser = (JCRUser) authorUser;
-                    if (authorJCRUser.getNode(jcrSessionWrapper).hasPermission(Privilege.JCR_MODIFY_PROPERTIES) && !authorUser.isRoot()) {
-                        if (authorUser.isAccountLocked()) {
+                JCRUserNode authorUserNode = getUserNode(jcrSessionWrapper, author);
+                if (authorUserNode != null) {
+                    if (authorUserNode.hasPermission(Privilege.JCR_MODIFY_PROPERTIES) && !authorUserNode.isRoot()) {
+                        if (isAccountLocked(authorUserNode)) {
                             possibleActions.add(new PostAction("Unblock user", "unblockUser"));
                         } else {
                             possibleActions.add(new PostAction("Block user", "blockUser"));
@@ -103,6 +105,44 @@ public class PostActionsAction extends Action {
 
 
         return new ActionResult(200, null, jsonObject);
+    }
+
+    protected JCRUserNode getUserNode(JCRSessionWrapper jcrSessionWrapper, String userName) {
+        // because of an API change between DF 7.0 and 7.1 we use reflection API to make sure we call the proper
+        // method.
+        try {
+            Method lookupUserMethod = jahiaUserManagerService.getClass().getMethod("lookupUser", String.class);
+            if (lookupUserMethod.getReturnType().equals(JahiaUser.class)) {
+                // DF 7.0 case
+                JahiaUser jahiaUser = (JahiaUser) lookupUserMethod.invoke(jahiaUserManagerService, userName);
+                if (jahiaUser != null && jahiaUser instanceof JCRUser) {
+                    return (JCRUserNode) ((JCRUser) jahiaUser).getNode(jcrSessionWrapper);
+                }
+            } if (lookupUserMethod.getReturnType().equals(JCRUserNode.class)) {
+                JCRUserNode jcrUserNode = (JCRUserNode) lookupUserMethod.invoke(jahiaUserManagerService, userName);
+                return jcrUserNode;
+            } else {
+                logger.error("Unrecognized lookup user method " + lookupUserMethod.toString() + "!");
+            }
+        } catch (NoSuchMethodException e) {
+            logger.error("Error finding lookupUser method !", e);
+        } catch (InvocationTargetException e) {
+            logger.error("Error invoking lookupUser method !", e);
+        } catch (IllegalAccessException e) {
+            logger.error("Error invoking lookupUser method !", e);
+        } catch (RepositoryException e) {
+            logger.error("Error retrieving user JCR node !", e);
+        }
+        return null;
+    }
+
+    public boolean isAccountLocked(JCRUserNode jcrUserNode) {
+        try {
+            return !jcrUserNode.isRoot() && jcrUserNode.hasProperty("j:accountLocked") && jcrUserNode.getProperty("j:accountLocked").getBoolean();
+        } catch (RepositoryException e) {
+            logger.error(e.getMessage(), e);
+            return false;
+        }
     }
 
 }

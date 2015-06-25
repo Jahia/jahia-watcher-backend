@@ -173,12 +173,11 @@ public class TaskActionsAction extends Action {
             // we are in the DF 7.0 case
             return (List<String>) getUserMembershipMethod.invoke(jahiaGroupManagerService, jahiaUser);
         } catch (NoSuchMethodException e) {
+            // we are in the DF 7.1 case
             try {
                 Method getUserMembershipMethod = jahiaGroupManagerService.getClass().getMethod("getUserMembership", String.class, String.class);
                 Method jahiaPrincipalMethod = jahiaUser.getClass().getMethod("getRealm");
                 String realm = (String) jahiaPrincipalMethod.invoke(jahiaUser);
-                // we are in the DF 7.1 case
-                // @todo for the moment we don't support site local users, but they are not used in DF 7.1 so this should be ok for the moment
                 return (List<String>) getUserMembershipMethod.invoke(jahiaGroupManagerService, jahiaUser.getUsername(), realm);
             } catch (NoSuchMethodException e1) {
                 logger.error("Coudln't find any recognized getUserMembership method !", e1);

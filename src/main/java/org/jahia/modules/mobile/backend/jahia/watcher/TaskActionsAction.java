@@ -7,12 +7,15 @@ import org.jahia.services.content.JCRContentUtils;
 import org.jahia.services.content.JCRNodeWrapper;
 import org.jahia.services.content.JCRSessionWrapper;
 import org.jahia.services.content.JCRValueWrapper;
+import org.jahia.services.content.decorator.JCRUserNode;
 import org.jahia.services.render.RenderContext;
 import org.jahia.services.render.Resource;
 import org.jahia.services.render.URLGenerator;
 import org.jahia.services.render.URLResolver;
 import org.jahia.services.usermanager.JahiaGroupManagerService;
+import org.jahia.services.usermanager.JahiaUser;
 import org.jahia.services.usermanager.JahiaUserManagerService;
+import org.jahia.services.usermanager.jcr.JCRUser;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -21,6 +24,8 @@ import org.slf4j.Logger;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -149,9 +154,9 @@ public class TaskActionsAction extends Action {
                 assignable = true;
             }
             if (!assignable) {
-                List<String> userGroups = jahiaGroupManagerService.getUserMembership(getCurrentUser());
+                List<String> userGroups = getUserMembership(getCurrentUser());
                 for (String userGroup : userGroups) {
-                    if (candidates.contains("g:" + userGroup)) {
+                    if (candidates.contains("g:" + userGroup) || candidates.contains(userGroup)) {
                         assignable = true;
                     }
                 }
@@ -159,6 +164,37 @@ public class TaskActionsAction extends Action {
         }
         return assignable;
     }
+
+    protected List<String> getUserMembership(JahiaUser jahiaUser) {
+        // because of an API change between DF 7.0 and 7.1 we use reflection API to make sure we call the proper
+        // method.
+        try {
+            Method getUserMembershipMethod = jahiaGroupManagerService.getClass().getMethod("getUserMembership", JahiaUser.class);
+            // we are in the DF 7.0 case
+            return (List<String>) getUserMembershipMethod.invoke(jahiaGroupManagerService, jahiaUser);
+        } catch (NoSuchMethodException e) {
+            try {
+                Method getUserMembershipMethod = jahiaGroupManagerService.getClass().getMethod("getUserMembership", String.class, String.class);
+                Method jahiaPrincipalMethod = jahiaUser.getClass().getMethod("getRealm");
+                String realm = (String) jahiaPrincipalMethod.invoke(jahiaUser);
+                // we are in the DF 7.1 case
+                // @todo for the moment we don't support site local users, but they are not used in DF 7.1 so this should be ok for the moment
+                return (List<String>) getUserMembershipMethod.invoke(jahiaGroupManagerService, jahiaUser.getUsername(), realm);
+            } catch (NoSuchMethodException e1) {
+                logger.error("Coudln't find any recognized getUserMembership method !", e1);
+            } catch (InvocationTargetException e1) {
+                logger.error("Error invoking getUserMembership method !", e1);
+            } catch (IllegalAccessException e1) {
+                logger.error("Error invoking getUserMembership method !", e1);
+            }
+        } catch (InvocationTargetException e) {
+            logger.error("Error invoking getUserMembership method !", e);
+        } catch (IllegalAccessException e) {
+            logger.error("Error invoking getUserMembership method !", e);
+        }
+        return null;
+    }
+
 
     private ActionResult doPost(HttpServletRequest httpServletRequest, RenderContext renderContext, Resource resource, JCRSessionWrapper jcrSessionWrapper, Map<String, List<String>> map, URLResolver urlResolver) {
         JSONObject jsonObject = new JSONObject();

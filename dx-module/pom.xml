@@ -71,45 +71,41 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>jahia-modules</artifactId>
+        <artifactId>jahia-watcher-backend-root</artifactId>
         <groupId>org.jahia.modules</groupId>
-        <version>7.0.0.5-SNAPSHOT</version>
+        <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>jahia-watcher-backend-root</artifactId>
-    <name>Jahia Watcher Backend Root Project</name>
-    <version>1.0-SNAPSHOT</version>    
-    <packaging>pom</packaging>
-    <description>This project is the root Maven project for the backend DX module for the Jahia Watcher mobile application</description>
+    <artifactId>jahia-watcher-backend</artifactId>
+    <name>Jahia Watcher Backend DX Module</name>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>bundle</packaging>
+    <description>This module implements the backend for the Jahia Watcher mobile application</description>
 
-    <scm>
-        <connection>scm:git:https://github.com/Jahia/jahia-watcher-backend.git</connection>
-        <developerConnection>scm:git:https://github.com/Jahia/jahia-watcher-backend.git</developerConnection>
-        <url>https://github.com/Jahia/jahia-watcher-backend.git</url>
-    </scm>
+    <dependencies>
+        <dependency>
+            <groupId>org.jahia.modules</groupId>
+            <artifactId>jcrestapi</artifactId>
+            <version>2.2.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 
-    <repositories>
-        <repository>
-            <id>jahia-public</id>
-            <name>Jahia Public Repository</name>
-            <url>https://devtools.jahia.com/nexus/content/groups/public</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>never</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
-    <modules>
-        <module>dx-module</module>
-        <module>karaf-feature</module>
-    </modules>
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Jahia-Depends>default,spam-filtering</Jahia-Depends>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
